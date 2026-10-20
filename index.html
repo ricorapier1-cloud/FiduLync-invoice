@@ -106,3 +106,211 @@
                     <span>Line Items</span>
                     <button type="button" class="add-btn" id="addItemBtn">+ Add Item</button>
                 </div>
+                <div id="itemsContainer">
+                    <div class="item-row">
+                        <input type="text" placeholder="Item/Service" class="item-name" required>
+                        <input type="number" placeholder="Qty" value="1" min="1" class="item-qty" required>
+                        <input type="number" placeholder="Price (₦)" step="0.01" class="item-price" required>
+                        <button type="button" class="remove-btn">&times;</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="total-box">
+                <span>Total Amount Due</span>
+                <h2 id="totalPriceDisplay">₦0.00</h2>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-whatsapp">Dispatch WhatsApp</button>
+                <button type="button" id="downloadPdfBtn" class="btn btn-pdf">Download PDF</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Hidden Template for PDF Rendering -->
+    <div id="pdfRenderArea">
+        <div class="pdf-header">
+            <div>
+                <h2 id="pdfBizName" style="color: #0d9488;"></h2>
+                <p id="pdfBizBank" style="font-size: 11px; color: #64748b;"></p>
+            </div>
+            <div style="text-align: right;">
+                <h3 style="font-size: 14px;">INVOICE</h3>
+                <p id="pdfRefId" style="font-size: 11px; font-family: monospace;"></p>
+                <p id="pdfDate" style="font-size: 11px; color: #64748b;"></p>
+            </div>
+        </div>
+        <p style="font-size: 12px; margin-bottom: 10px;"><strong>Billed To:</strong> <span id="pdfCustomer"></span></p>
+        <table class="pdf-table">
+            <thead>
+                <tr>
+                    <th>Item Description</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody id="pdfTableBody"></tbody>
+        </table>
+        <div style="text-align: right; margin-top: 20px;">
+            <h3 style="font-size: 16px; color: #0d9488;">Total Due: <span id="pdfTotal"></span></h3>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('itemsContainer');
+            const addItemBtn = document.getElementById('addItemBtn');
+            const totalDisplay = document.getElementById('totalPriceDisplay');
+            const invoiceForm = document.getElementById('invoiceForm');
+
+            // Restore merchant details from LocalStorage if previously saved
+            if(localStorage.getItem('bizName')) document.getElementById('bizName').value = localStorage.getItem('bizName');
+            if(localStorage.getItem('bizBank')) document.getElementById('bizBank').value = localStorage.getItem('bizBank');
+
+            // Auto-generate Ref ID without overflow
+            const now = new Date();
+            const refCode = 'INV-' + now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + '-' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('invoiceNumber').value = refCode;
+
+            function formatCurrency(amount) {
+                return '₦' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function calculateTotals() {
+                let total = 0;
+                container.querySelectorAll('.item-row').forEach(row => {
+                    const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                    total += (qty * price);
+                });
+                totalDisplay.textContent = formatCurrency(total);
+                return total;
+            }
+
+            addItemBtn.addEventListener('click', () => {
+                const row = document.createElement('div');
+                row.className = "item-row";
+                row.innerHTML = `
+                    <input type="text" placeholder="Item/Service" class="item-name" required>
+                    <input type="number" placeholder="Qty" value="1" min="1" class="item-qty" required>
+                    <input type="number" placeholder="Price (₦)" step="0.01" class="item-price" required>
+                    <button type="button" class="remove-btn">&times;</button>
+                `;
+                container.appendChild(row);
+                calculateTotals();
+            });
+
+            container.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-btn')) {
+                    if (container.querySelectorAll('.item-row').length > 1) {
+                        e.target.closest('.item-row').remove();
+                        calculateTotals();
+                    }
+                }
+            });
+
+            container.addEventListener('input', calculateTotals);
+
+            function cleanPhone(phone) {
+                let clean = phone.replace(/\D/g, '');
+                if (clean.startsWith('0') && clean.length === 11) clean = '234' + clean.substring(1);
+                return clean;
+            }
+
+            // Save Merchant details to LocalStorage
+            function saveMerchantDetails() {
+                localStorage.setItem('bizName', document.getElementById('bizName').value.trim());
+                localStorage.setItem('bizBank', document.getElementById('bizBank').value.trim());
+            }
+
+            // Dispatch to WhatsApp
+            invoiceForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveMerchantDetails();
+
+                const bizName = document.getElementById('bizName').value.trim();
+                const bizBank = document.getElementById('bizBank').value.trim();
+                const phone = cleanPhone(document.getElementById('customerPhone').value.trim());
+                const customer = document.getElementById('customerName').value.trim();
+                const ref = document.getElementById('invoiceNumber').value;
+                const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                let msg = [];
+                msg.push(`🧾 *INVOICE FROM ${bizName.toUpperCase()}*`);
+                msg.push(`*Ref ID:* ${ref}`);
+                msg.push(`*Date:* ${date}`);
+                msg.push(`*Customer:* ${customer}`);
+                msg.push(`----------------------------------`);
+                msg.push(`*ITEMS ORDERED:*`);
+
+                let total = 0;
+                container.querySelectorAll('.item-row').forEach((row, i) => {
+                    const name = row.querySelector('.item-name').value.trim();
+                    const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+                    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                    const subtotal = qty * price;
+                    total += subtotal;
+                    msg.push(`${i + 1}. *${name}* (${qty}x) = ${formatCurrency(subtotal)}`);
+                });
+
+                msg.push(`----------------------------------`);
+                msg.push(`💰 *TOTAL DUE:* *${formatCurrency(total)}*`);
+                msg.push(`----------------------------------`);
+                msg.push(`💳 *PAYMENT DETAILS:*`);
+                msg.push(`*Bank:* ${bizBank}`);
+                msg.push(`\nPlease send proof of payment once transfer is complete.`);
+
+                window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg.join('\n'))}`, '_blank');
+            });
+
+            // Instant PDF Download Logic
+            document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+                saveMerchantDetails();
+                
+                document.getElementById('pdfBizName').textContent = document.getElementById('bizName').value || 'Business Name';
+                document.getElementById('pdfBizBank').textContent = 'Payment Info: ' + (document.getElementById('bizBank').value || 'N/A');
+                document.getElementById('pdfRefId').textContent = document.getElementById('invoiceNumber').value;
+                document.getElementById('pdfDate').textContent = new Date().toLocaleDateString();
+                document.getElementById('pdfCustomer').textContent = document.getElementById('customerName').value || 'Valued Client';
+
+                const tbody = document.getElementById('pdfTableBody');
+                tbody.innerHTML = '';
+                let total = 0;
+
+                container.querySelectorAll('.item-row').forEach(row => {
+                    const name = row.querySelector('.item-name').value || 'Item';
+                    const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+                    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                    const subtotal = qty * price;
+                    total += subtotal;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${name}</td>
+                            <td>${qty}</td>
+                            <td>${formatCurrency(price)}</td>
+                            <td>${formatCurrency(subtotal)}</td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('pdfTotal').textContent = formatCurrency(total);
+
+                const element = document.getElementById('pdfRenderArea');
+                element.style.display = 'block';
+
+                html2pdf().set({
+                    margin: 10,
+                    filename: `${document.getElementById('invoiceNumber').value}.pdf`,
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                }).from(element).save().then(() => {
+                    element.style.display = 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

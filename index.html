@@ -3,378 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Invoice Generator</title>
+    <title>Enterprise WhatsApp & PDF Invoice System</title>
+    <!-- html2pdf bundle for instant PDF download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --primary: #0d9488;
             --primary-hover: #0f766e;
             --bg: #f8fafc;
             --card: #ffffff;
-            --text: #1e293b;
+            --text: #0f172a;
             --border: #e2e8f0;
         }
 
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 20px 12px; min-height: 100vh; }
+        .wrapper { max-width: 520px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 20px; }
+        h1 { color: var(--primary); font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+        header p { color: #64748b; font-size: 13px; margin-top: 4px; }
+        
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 16px; }
+        .section-title { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
+        input { width: 100%; background: #f8fafc; border: 1px solid var(--border); padding: 10px 12px; font-size: 13px; border-radius: 8px; outline: none; transition: all 0.2s; }
+        input:focus { border-color: var(--primary); background: #fff; }
+        input[readonly] { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
 
-        body { 
-            background-color: var(--bg); 
-            color: var(--text); 
-            padding: 20px 16px; 
-            min-height: 100vh; 
-        }
+        .item-row { display: grid; grid-template-columns: 4fr 2fr 3fr auto; gap: 6px; align-items: center; background: #f8fafc; padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #f1f5f9; }
+        .remove-btn { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; padding: 0 4px; }
+        .remove-btn:hover { color: #ef4444; }
+        .add-btn { background: #f0fdfa; color: var(--primary); border: 1px solid #ccfbf1; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
 
-        .wrapper { 
-            max-width: 480px; 
-            margin: 0 auto; 
-        }
+        .total-box { background: #0f172a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; color: white; margin: 16px 0; }
+        .total-box span { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 600; }
+        .total-box h2 { font-size: 20px; color: #2dd4bf; font-family: monospace; }
 
-        header { 
-            text-align: center; 
-            margin-bottom: 24px; 
-        }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { width: 100%; border: none; font-weight: 700; font-size: 13px; padding: 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .btn-whatsapp { background: #10b981; color: white; }
+        .btn-whatsapp:hover { background: #059669; }
+        .btn-pdf { background: #3b82f6; color: white; }
+        .btn-pdf:hover { background: #2563eb; }
 
-        h1 { 
-            color: var(--primary); 
-            font-size: 24px; 
-            font-weight: 800; 
-            letter-spacing: -0.5px; 
-            margin-bottom: 4px; 
-        }
-
-        header p { 
-            color: #64748b; 
-            font-size: 13px; 
-        }
-
-        form { 
-            background: var(--card); 
-            border: 1px solid #f1f5f9; 
-            border-radius: 16px; 
-            padding: 20px; 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
-        }
-
-        .form-group { 
-            margin-bottom: 16px; 
-        }
-
-        .grid-2 { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
-            margin-bottom: 16px; 
-        }
-
-        label { 
-            display: block; 
-            font-size: 11px; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            color: #64748b; 
-            margin-bottom: 6px; 
-            letter-spacing: 0.5px; 
-        }
-
-        input { 
-            width: 100%; 
-            background: #f8fafc; 
-            border: 1px solid var(--border); 
-            padding: 12px; 
-            font-size: 14px; 
-            border-radius: 8px; 
-            transition: all 0.2s; 
-            outline: none; 
-        }
-
-        input:focus { 
-            border-color: var(--primary); 
-            background: #fff; 
-        }
-
-        .items-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 1px solid #f1f5f9; 
-            padding-bottom: 8px; 
-            margin-bottom: 12px; 
-            margin-top: 8px; 
-        }
-
-        .items-header h3 { 
-            font-size: 12px; 
-            font-weight: 700; 
-            color: #475569; 
-            text-transform: uppercase; 
-        }
-
-        #addItemBtn { 
-            background: #f0fdfa; 
-            color: var(--primary); 
-            border: none; 
-            font-size: 12px; 
-            font-weight: 700; 
-            padding: 6px 12px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-        }
-
-        #addItemBtn:hover {
-            background: #ccfbf1;
-        }
-
-        .item-row { 
-            display: grid; 
-            grid-template-columns: 5fr 2fr 4fr 1fr; 
-            gap: 8px; 
-            align-items: center; 
-            background: #f8fafc; 
-            padding: 10px; 
-            border-radius: 8px; 
-            margin-bottom: 8px; 
-            border: 1px solid #f1f5f9; 
-        }
-
-        .remove-row-btn { 
-            background: none; 
-            border: none; 
-            color: #94a3b8; 
-            font-size: 18px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-        }
-
-        .remove-row-btn:hover { 
-            color: #ef4444; 
-        }
-
-        .total-box { 
-            background: #0f172a; 
-            border-radius: 12px; 
-            padding: 16px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            color: white; 
-            margin: 20px 0; 
-        }
-
-        .total-box span { 
-            font-size: 11px; 
-            text-transform: uppercase; 
-            color: #94a3b8; 
-            font-weight: 600; 
-        }
-
-        .total-box h2 { 
-            font-size: 20px; 
-            color: #2dd4bf; 
-            font-family: monospace; 
-        }
-
-        .submit-btn { 
-            width: 100%; 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            font-weight: 700; 
-            font-size: 15px; 
-            padding: 14px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2); 
-            transition: all 0.2s; 
-        }
-
-        .submit-btn:hover { 
-            background: var(--primary-hover); 
-        }
+        /* Hidden PDF Template */
+        #pdfRenderArea { display: none; padding: 30px; background: white; color: #0f172a; }
+        .pdf-header { display: flex; justify-content: space-between; border-bottom: 2px solid #0d9488; padding-bottom: 12px; margin-bottom: 20px; }
+        .pdf-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .pdf-table th, .pdf-table td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 12px; }
+        .pdf-table th { background: #f8fafc; font-weight: 700; }
     </style>
 </head>
 <body>
 
     <div class="wrapper">
         <header>
-            <h1>WhatsApp Invoice System</h1>
-            <p>Generate and transfer digital bills instantly without a server</p>
+            <h1>Pro Invoice Generator</h1>
+            <p>Serverless WhatsApp Dispatches & PDF Invoices</p>
         </header>
 
         <form id="invoiceForm">
-            <div class="grid-2">
-                <div>
-                    <label for="invoiceNumber">Invoice Ref ID</label>
-                    <input type="text" id="invoiceNumber" required style="font-family: monospace;">
-                </div>
-                <div>
-                    <label for="customerPhone">WhatsApp Number</label>
-                    <input type="tel" id="customerPhone" placeholder="e.g. 08031234567" required>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="customerName">Customer Name</label>
-                <input type="text" id="customerName" placeholder="John Doe" required>
-            </div>
-
-            <div>
-                <div class="items-header">
-                    <h3>Line Items</h3>
-                    <button type="button" id="addItemBtn">+ Add Item</button>
-                </div>
-
-                <div id="itemsContainer">
-                    <div class="item-row">
-                        <input type="text" placeholder="Item/Service" required class="item-name">
-                        <input type="number" placeholder="Qty" min="1" value="1" inputmode="numeric" required class="item-qty">
-                        <input type="number" placeholder="Price (₦)" step="0.01" inputmode="decimal" required class="item-price">
-                        <button type="button" class="remove-row-btn" title="Remove Item">&times;</button>
+            <!-- Merchant Info Section -->
+            <div class="card">
+                <div class="section-title">Your Business Details (Merchant)</div>
+                <div class="grid-2">
+                    <div>
+                        <label>Business Name</label>
+                        <input type="text" id="bizName" placeholder="e.g. Nexus Tech Hub" required>
+                    </div>
+                    <div>
+                        <label>Bank Name & Account</label>
+                        <input type="text" id="bizBank" placeholder="e.g. GTBank - 0123456789" required>
                     </div>
                 </div>
             </div>
 
-            <div class="total-box">
-                <span>Total Value</span>
-                <h2 id="totalPriceDisplay">₦0.00</h2>
+            <!-- Customer & Invoice Ref -->
+            <div class="card">
+                <div class="section-title">Client & Invoice Meta</div>
+                <div class="grid-2">
+                    <div>
+                        <label>Ref ID</label>
+                        <input type="text" id="invoiceNumber" readonly style="font-family: monospace;">
+                    </div>
+                    <div>
+                        <label>WhatsApp Number</label>
+                        <input type="tel" id="customerPhone" placeholder="08031234567" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Customer Name</label>
+                    <input type="text" id="customerName" placeholder="Akin Ola" required>
+                </div>
             </div>
 
-            <button type="submit" class="submit-btn">Compile & Dispatch to WhatsApp</button>
-        </form>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('itemsContainer');
-            const addItemBtn = document.getElementById('addItemBtn');
-            const totalDisplay = document.getElementById('totalPriceDisplay');
-            const invoiceForm = document.getElementById('invoiceForm');
-
-            // Generate dynamic Reference ID timestamp
-            const now = new Date();
-            const timestampID = 'INV-' + now.getFullYear() + 
-                                String(now.getMonth() + 1).padStart(2, '0') + 
-                                String(now.getDate()).padStart(2, '0') + '-' +
-                                String(now.getHours()).padStart(2, '0') + 
-                                String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('invoiceNumber').value = timestampID;
-
-            function cleanPhoneNumber(phoneStr) {
-                let cleaned = phoneStr.replace(/\D/g, '');
-                if (cleaned.startsWith('0') && cleaned.length === 11) {
-                    cleaned = '234' + cleaned.substring(1);
-                }
-                return cleaned;
-            }
-
-            function formatCurrency(amount) {
-                return '₦' + amount.toLocaleString('en-US', { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
-                });
-            }
-
-            function calculateInvoiceTotals() {
-                let grandTotal = 0;
-                const rows = container.querySelectorAll('.item-row');
-                
-                rows.forEach(row => {
-                    const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-                    const price = parseFloat(row.querySelector('.item-price').value) || 0;
-                    grandTotal += (qty * price);
-                });
-                
-                totalDisplay.textContent = formatCurrency(grandTotal);
-                return grandTotal;
-            }
-
-            addItemBtn.addEventListener('click', function() {
-                const newRow = document.createElement('div');
-                newRow.className = "item-row";
-                newRow.innerHTML = `
-                    <input type="text" placeholder="Item/Service" required class="item-name">
-                    <input type="number" placeholder="Qty" min="1" value="1" inputmode="numeric" required class="item-qty">
-                    <input type="number" placeholder="Price (₦)" step="0.01" inputmode="decimal" required class="item-price">
-                    <button type="button" class="remove-row-btn" title="Remove Item">&times;</button>
-                `;
-                container.appendChild(newRow);
-                calculateInvoiceTotals();
-            });
-
-            container.addEventListener('click', function(e) {
-                if (e.target.classList.contains('remove-row-btn')) {
-                    const rowsCount = container.querySelectorAll('.item-row').length;
-                    if (rowsCount > 1) {
-                        e.target.closest('.item-row').remove();
-                        calculateInvoiceTotals();
-                    } else {
-                        alert('Your invoice requires at least one active entry.');
-                    }
-                }
-            });
-
-            // Re-calculate totals on typing or changing quantities/prices
-            container.addEventListener('input', calculateInvoiceTotals);
-
-            invoiceForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                const invoiceNum = document.getElementById('invoiceNumber').value.trim();
-                const phoneRaw = document.getElementById('customerPhone').value.trim();
-                const nameInput = document.getElementById('customerName').value.trim();
-                const cleanPhone = cleanPhoneNumber(phoneRaw);
-
-                if (!cleanPhone) {
-                    alert('Please enter a valid phone number.');
-                    return;
-                }
-                
-                const todayDate = new Date().toLocaleDateString('en-GB', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-
-                const rows = container.querySelectorAll('.item-row');
-                
-                let textBuffer = [];
-                textBuffer.push(`🧾 *OFFICIAL INVOICE*`);
-                textBuffer.push(`*Ref ID:* #${invoiceNum}`);
-                textBuffer.push(`*Date:* ${todayDate}`);
-                textBuffer.push(`*Customer:* ${nameInput}`);
-                textBuffer.push(`----------------------------------`);
-                textBuffer.push(`*ITEMS ORDERED:*`);
-
-                let runningTotal = 0;
-                rows.forEach((row, index) => {
-                    const name = row.querySelector('.item-name').value.trim();
-                    const qty = parseInt(row.querySelector('.item-qty').value) || 0;
-                    const price = parseFloat(row.querySelector('.item-price').value) || 0;
-                    const itemTotal = qty * price;
-                    runningTotal += itemTotal;
-
-                    textBuffer.push(`${index + 1}. *${name}*`);
-                    textBuffer.push(`   ${qty} x ${formatCurrency(price)} = *${formatCurrency(itemTotal)}*`);
-                });
-
-                textBuffer.push(`----------------------------------`);
-                textBuffer.push(`💰 *TOTAL AMOUNT DUE:* *${formatCurrency(runningTotal)}*`);
-                textBuffer.push(`----------------------------------`);
-                textBuffer.push(`Thank you for your business!`);
-
-                const fullMessage = textBuffer.join('\n');
-                const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(fullMessage)}`;
-
-                // Launch WhatsApp with pre-filled message
-                window.open(whatsappUrl, '_blank');
-            });
-        });
-    </script>
-</body>
-</html>
+            <!-- Items Section -->
+            <div class="card">
+                <div class="section-title">
+                    <span>Line Items</span>
+                    <button type="button" class="add-btn" id="addItemBtn">+ Add Item</button>
+                </div>

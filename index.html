@@ -4,87 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsApp Invoice Generator</title>
-    <!-- Tailwind CSS Engine for modern responsive styling -->
-    <script src="https://tailwindcss.com"></script>
+    <style>
+        /* Premium Failsafe Local Styling Stylesheet */
+        :root {
+            --primary: #0d9488;
+            --primary-hover: #0f766e;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 20px 16px; min-height: 100vh; }
+        .wrapper { max-width: 480px; mx-auto: margin; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 24px; }
+        h1 { color: var(--primary); font-size: 26px; font-weight: 800; letter-tight: -0.5px; margin-bottom: 4px; }
+        header p { color: #64748b; font-size: 13px; }
+        form { background: var(--card); border: 1px solid #f1f5f9; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 16px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 6px; letter-spacing: 0.5px; }
+        input { w-full: 100%; width: 100%; background: #f8fafc; border: 1px solid var(--border); padding: 10px 12px; font-size: 14px; border-radius: 8px; transition: all 0.2s; outline: none; }
+        input:focus { border-color: var(--primary); background: #fff; }
+        .items-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 12px; margin-top: 8px; }
+        .items-header h3 { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; }
+        #addItemBtn { background: #f0fdfa; color: var(--primary); border: none; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .item-row { display: grid; grid-template-columns: 6fr 2fr 3fr 1fr; gap: 8px; align-items: center; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #f1f5f9; }
+        .remove-row-btn { background: none; border: none; color: #94a3b8; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .remove-row-btn:hover { color: #ef4444; }
+        .total-box { background: #0f172a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; color: white; margin: 20px 0; }
+        .total-box span { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 600; }
+        .total-box h2 { font-size: 20px; color: #2dd4bf; font-family: monospace; }
+        .submit-btn { width: 100%; background: var(--primary); color: white; border: none; font-weight: 700; font-size: 15px; padding: 14px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2); transition: all 0.2s; }
+        .submit-btn:hover { background: var(--primary-hover); }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800">
+<body>
 
-    <div class="max-w-2xl mx-auto px-4 py-8">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-extrabold text-teal-600 tracking-tight">WhatsApp Invoice System</h1>
-            <p class="text-gray-500 text-sm mt-1">Generate and transfer digital bills to customers instantly without a server</p>
+    <div class="wrapper">
+        <header>
+            <h1>WhatsApp Invoice System</h1>
+            <p>Generate and transfer digital bills instantly without a server</p>
         </header>
 
-        <!-- The entirely client-side driven interactive invoice form -->
-        <form id="invoiceForm" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-            
-            <!-- Metadata Segment -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form id="invoiceForm">
+            <div class="grid-2">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Invoice Reference ID</label>
-                    <input type="text" id="invoiceNumber" required 
-                           class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500 font-mono">
+                    <label>Invoice Ref ID</label>
+                    <input type="text" id="invoiceNumber" required style="font-family: monospace;">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Customer WhatsApp Number</label>
-                    <input type="tel" id="customerPhone" placeholder="e.g., 2348031234567" required
-                           class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500">
+                    <label>WhatsApp Number</label>
+                    <input type="tel" id="customerPhone" placeholder="e.g., 2348031234567" required>
                 </div>
             </div>
 
-            <!-- Client Identification Segment -->
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Customer / Client Name</label>
-                <input type="text" id="customerName" placeholder="John Doe" required
-                       class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500">
+            <div class="form-group">
+                <label>Customer Name</label>
+                <input type="text" id="customerName" placeholder="John Doe" required>
             </div>
 
-            <!-- Dynamic Invoice Items Segment -->
             <div>
-                <div class="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
-                    <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Line Items</h3>
-                    <button type="button" id="addItemBtn" 
-                            class="text-xs bg-teal-50 text-teal-600 font-semibold px-3 py-1 rounded-md hover:bg-teal-100 transition-colors">
-                        + Add Line Item
-                    </button>
+                <div class="items-header">
+                    <h3>Line Items</h3>
+                    <button type="button" id="addItemBtn">+ Add Item</button>
                 </div>
 
-                <div id="itemsContainer" class="space-y-3">
-                    <!-- Standard Default Row -->
-                    <div class="item-row grid grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
-                        <div class="col-span-6">
-                            <input type="text" placeholder="Item Name/Service" required 
-                                   class="item-name w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-teal-500">
-                        </div>
-                        <div class="col-span-2">
-                            <input type="number" placeholder="Qty" min="1" value="1" required 
-                                   class="item-qty w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-teal-500 text-center">
-                        </div>
-                        <div class="col-span-3">
-                            <input type="number" placeholder="Price (₦)" step="0.01" required 
-                                   class="item-price w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-teal-500">
-                        </div>
-                        <div class="col-span-1 text-center">
-                            <button type="button" class="remove-row-btn text-gray-400 hover:text-red-500 font-bold text-sm">×</button>
-                        </div>
+                <div id="itemsContainer">
+                    <div class="item-row">
+                        <input type="text" placeholder="Item/Service" required class="item-name">
+                        <input type="number" placeholder="Qty" min="1" value="1" required class="item-qty" style="text-align: center;">
+                        <input type="number" placeholder="Price (₦)" step="0.01" required class="item-price">
+                        <button type="button" class="remove-row-btn">&times;</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Visual Grand Total Tracker Layout Box -->
-            <div class="bg-gray-900 rounded-xl p-4 flex justify-between items-center text-white">
-                <span class="text-xs font-medium uppercase tracking-wider text-gray-400">Calculated Invoice Value</span>
-                <span class="text-xl font-mono font-bold text-teal-400" id="totalPriceDisplay">₦0.00</span>
+            <div class="total-box">
+                <span>Total Value</span>
+                <h2 id="totalPriceDisplay">₦0.00</h2>
             </div>
 
-            <button type="submit" 
-                    class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all text-center block text-sm">
-                Compile & Dispatch to WhatsApp
-            </button>
+            <button type="submit" class="submit-btn">Compile & Dispatch to WhatsApp</button>
         </form>
     </div>
 
-    <!-- Frontend Functional JavaScript Layer -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('itemsContainer');
@@ -92,7 +96,6 @@
             const totalDisplay = document.getElementById('totalPriceDisplay');
             const invoiceForm = document.getElementById('invoiceForm');
 
-            // Automatically generate a unique Reference ID on load (Format: YYYYMMDDHHMM)
             const now = new Date();
             const timestampID = now.getFullYear() + 
                                 String(now.getMonth() + 1).padStart(2, '0') + 
@@ -101,16 +104,14 @@
                                 String(now.getMinutes()).padStart(2, '0');
             document.getElementById('invoiceNumber').value = timestampID;
 
-            // Sanitizes input numbers directly on the frontend browser layer
             function cleanPhoneNumber(phoneStr) {
-                let cleaned = phoneStr.replace(/\D/g, ''); // Strip everything except digits
+                let cleaned = phoneStr.replace(/\D/g, '');
                 if (cleaned.startsWith('0') && cleaned.length === 11) {
-                    cleaned = '234' + cleaned.substring(1); // Translate localized zero prefixes
+                    cleaned = '234' + cleaned.substring(1);
                 }
                 return cleaned;
             }
 
-            // Realtime responsive math calculator tracking values across entries
             function calculateInvoiceTotals() {
                 let grandTotal = 0;
                 const rows = container.querySelectorAll('.item-row');
@@ -127,32 +128,19 @@
                 });
             }
 
-            // Append item entry components dynamic loops
             addItemBtn.addEventListener('click', function() {
                 const newRow = document.createElement('div');
-                newRow.className = "item-row grid grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded-lg border border-gray-100";
+                newRow.className = "item-row";
                 newRow.innerHTML = `
-                    <div class="col-span-6">
-                        <input type="text" placeholder="Item Name/Service" required 
-                               class="item-name w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-teal-500">
-                    </div>
-                    <div class="col-span-2">
-                        <input type="number" placeholder="Qty" min="1" value="1" required 
-                               class="item-qty w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-teal-500 text-center">
-                    </div>
-                    <div class="col-span-3">
-                        <input type="number" placeholder="Price (₦)" step="0.01" required 
-                               class="item-price w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-teal-500">
-                    </div>
-                    <div class="col-span-1 text-center">
-                        <button type="button" class="remove-row-btn text-gray-400 hover:text-red-500 font-bold text-sm">×</button>
-                    </div>
+                    <input type="text" placeholder="Item/Service" required class="item-name">
+                    <input type="number" placeholder="Qty" min="1" value="1" required class="item-qty" style="text-align: center;">
+                    <input type="number" placeholder="Price (₦)" step="0.01" required class="item-price">
+                    <button type="button" class="remove-row-btn">&times;</button>
                 `;
                 container.appendChild(newRow);
                 calculateInvoiceTotals();
             });
 
-            // Handle row deletion
             container.addEventListener('click', function(e) {
                 if (e.target.classList.contains('remove-row-btn')) {
                     const rowsCount = container.querySelectorAll('.item-row').length;
@@ -160,15 +148,37 @@
                         e.target.closest('.item-row').remove();
                         calculateInvoiceTotals();
                     } else {
-                        alert('Your invoice requires at least one active item line entry.');
+                        alert('Your invoice requires at least one active entry.');
                     }
                 }
             });
 
-            // Listen for changes to dynamically calculate prices live
             container.addEventListener('input', calculateInvoiceTotals);
 
-            // Capture submissions and launch direct client-side WhatsApp deep integration redirect loops
             invoiceForm.addEventListener('submit', function(e) {
-                e.preventDefault(); // Block standard form reloading
+                e.preventDefault();
 
+                const invoiceNum = document.getElementById('invoiceNumber').value.trim();
+                const phoneRaw = document.getElementById('customerPhone').value.trim();
+                const nameInput = document.getElementById('customerName').value.trim();
+                const cleanPhone = cleanPhoneNumber(phoneRaw);
+                
+                const todayDate = new Date().toISOString().split('T')[0];
+                const rows = container.querySelectorAll('.item-row');
+                
+                let textBuffer = [];
+                textBuffer.push(`*INVOICE #${invoiceNum}*`);
+                textBuffer.push(`Date: ${todayDate}\n`);
+                textBuffer.push(`*Customer:* ${nameInput}`);
+                textBuffer.push(`----------------------------------`);
+                textBuffer.push(`*Items Ordered:*`);
+
+                let runningTotal = 0;
+                rows.forEach(row => {
+                    const name = row.querySelector('.item-name').value.trim();
+                    const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+                    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                    const itemTotal = qty * price;
+                    runningTotal += itemTotal;
+
+                    textBuffer.push(`• ${qty}x ${name} @ ₦${price.toLocaleString('en-US', {minimumFractionDigits: 2})} = ₦${itemTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}`);

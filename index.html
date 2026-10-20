@@ -14,6 +14,7 @@
             --card: #ffffff;
             --text: #0f172a;
             --border: #e2e8f0;
+            --success: #10b981;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -29,14 +30,21 @@
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
         .form-group { margin-bottom: 12px; }
         label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
-        input { width: 100%; background: #f8fafc; border: 1px solid var(--border); padding: 10px 12px; font-size: 13px; border-radius: 8px; outline: none; transition: all 0.2s; }
-        input:focus { border-color: var(--primary); background: #fff; }
+        input, select { width: 100%; background: #f8fafc; border: 1px solid var(--border); padding: 10px 12px; font-size: 13px; border-radius: 8px; outline: none; transition: all 0.2s; }
+        input:focus, select:focus { border-color: var(--primary); background: #fff; }
         input[readonly] { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
+
+        /* Bank Verification Badges */
+        .verification-badge { font-size: 11px; font-weight: 700; margin-top: 6px; display: none; }
+        .verification-badge.success { color: var(--success); display: block; }
+        .verification-badge.loading { color: #f59e0b; display: block; }
+        .verification-badge.error { color: #ef4444; display: block; }
 
         .item-row { display: grid; grid-template-columns: 4fr 2fr 3fr auto; gap: 6px; align-items: center; background: #f8fafc; padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #f1f5f9; }
         .remove-btn { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; padding: 0 4px; }
         .remove-btn:hover { color: #ef4444; }
-        .add-btn { background: #f0fdfa; color: var(--primary); border: 1px solid #ccfbf1; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+        .add-btn { background: #f0fdfa; color: var(--primary); border: 1px solid #ccfbf1; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .add-btn:hover { background: #ccfbf1; }
 
         .total-box { background: #0f172a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; color: white; margin: 16px 0; }
         .total-box span { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 600; }
@@ -49,7 +57,6 @@
         .btn-pdf { background: #3b82f6; color: white; }
         .btn-pdf:hover { background: #2563eb; }
 
-        /* Hidden PDF Template */
         #pdfRenderArea { display: none; padding: 30px; background: white; color: #0f172a; }
         .pdf-header { display: flex; justify-content: space-between; border-bottom: 2px solid #0d9488; padding-bottom: 12px; margin-bottom: 20px; }
         .pdf-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
@@ -62,26 +69,39 @@
     <div class="wrapper">
         <header>
             <h1>Pro Invoice Generator</h1>
-            <p>Serverless WhatsApp Dispatches & PDF Invoices</p>
+            <p>Serverless WhatsApp Dispatches & Auto-Verified Bank Transfers</p>
         </header>
 
         <form id="invoiceForm">
-            <!-- Merchant Info Section -->
+            <!-- Merchant Info -->
             <div class="card">
                 <div class="section-title">Your Business Details (Merchant)</div>
+                <div class="form-group">
+                    <label>Business Name</label>
+                    <input type="text" id="bizName" placeholder="e.g. Nexus Tech Hub" required>
+                </div>
+                
                 <div class="grid-2">
                     <div>
-                        <label>Business Name</label>
-                        <input type="text" id="bizName" placeholder="e.g. Nexus Tech Hub" required>
+                        <label>Select Bank</label>
+                        <select id="bankSelect" required>
+                            <option value="">Loading Banks...</option>
+                        </select>
                     </div>
                     <div>
-                        <label>Bank Name & Account</label>
-                        <input type="text" id="bizBank" placeholder="e.g. GTBank - 0123456789" required>
+                        <label>Account Number (NUBAN)</label>
+                        <input type="tel" id="accountNumber" maxlength="10" placeholder="0123456789" required>
                     </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Verified Account Name</label>
+                    <input type="text" id="verifiedAccountName" placeholder="Auto-fetches on 10 digits..." readonly>
+                    <div id="verifyStatus" class="verification-badge"></div>
                 </div>
             </div>
 
-            <!-- Customer & Invoice Ref -->
+            <!-- Client Info -->
             <div class="card">
                 <div class="section-title">Client & Invoice Meta</div>
                 <div class="grid-2">
@@ -100,20 +120,13 @@
                 </div>
             </div>
 
-            <!-- Items Section -->
+            <!-- Line Items Card -->
             <div class="card">
                 <div class="section-title">
                     <span>Line Items</span>
                     <button type="button" class="add-btn" id="addItemBtn">+ Add Item</button>
                 </div>
-                <div id="itemsContainer">
-                    <div class="item-row">
-                        <input type="text" placeholder="Item/Service" class="item-name" required>
-                        <input type="number" placeholder="Qty" value="1" min="1" class="item-qty" required>
-                        <input type="number" placeholder="Price (₦)" step="0.01" class="item-price" required>
-                        <button type="button" class="remove-btn">&times;</button>
-                    </div>
-                </div>
+                <div id="itemsContainer"></div>
             </div>
 
             <div class="total-box">
@@ -128,7 +141,7 @@
         </form>
     </div>
 
-    <!-- Hidden Template for PDF Rendering -->
+    <!-- Hidden PDF Template -->
     <div id="pdfRenderArea">
         <div class="pdf-header">
             <div>
@@ -159,19 +172,102 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        // Paystack Public Key for Account Resolution
+        const PAYSTACK_PUBLIC_KEY = 'pk_test_a537e794fe3c198af4d21738b4aa88b1cc452520'; 
+
+        window.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('itemsContainer');
             const addItemBtn = document.getElementById('addItemBtn');
             const totalDisplay = document.getElementById('totalPriceDisplay');
             const invoiceForm = document.getElementById('invoiceForm');
+            const bankSelect = document.getElementById('bankSelect');
+            const accountNumberInput = document.getElementById('accountNumber');
+            const verifiedAccountInput = document.getElementById('verifiedAccountName');
+            const verifyStatus = document.getElementById('verifyStatus');
 
-            // Restore merchant details from LocalStorage if previously saved
-            if(localStorage.getItem('bizName')) document.getElementById('bizName').value = localStorage.getItem('bizName');
-            if(localStorage.getItem('bizBank')) document.getElementById('bizBank').value = localStorage.getItem('bizBank');
+            // 1. Populate Popular Nigerian Banks
+            const nigerianBanks = [
+                { name: "Guaranty Trust Bank (GTBank)", code: "058" },
+                { name: "Access Bank", code: "044" },
+                { name: "Zenith Bank", code: "057" },
+                { name: "First Bank of Nigeria", code: "011" },
+                { name: "United Bank for Africa (UBA)", code: "033" },
+                { name: "Kuda Bank", code: "50211" },
+                { name: "OPay Digital Services", code: "999992" },
+                { name: "Moniepoint MFB", code: "50515" },
+                { name: "Palmpay", code: "999991" },
+                { name: "Stanbic IBTC Bank", code: "221" },
+                { name: "Fidelity Bank", code: "070" },
+                { name: "Sterling Bank", code: "232" },
+                { name: "Wema Bank (ALAT)", code: "035" }
+            ];
 
-            // Auto-generate Ref ID without overflow
+            function populateBanks() {
+                bankSelect.innerHTML = '<option value="">-- Select Bank --</option>';
+                nigerianBanks.forEach(bank => {
+                    const opt = document.createElement('option');
+                    opt.value = bank.code;
+                    opt.textContent = bank.name;
+                    bankSelect.appendChild(opt);
+                });
+            }
+            populateBanks();
+
+            // 2. Auto-Verify Bank Account Name via Paystack API
+            async function verifyBankAccount() {
+                const bankCode = bankSelect.value;
+                const accountNumber = accountNumberInput.value.trim();
+
+                if (accountNumber.length === 10 && bankCode) {
+                    verifyStatus.className = "verification-badge loading";
+                    verifyStatus.textContent = "⌛ Verifying account details...";
+                    verifiedAccountInput.value = "";
+
+                    try {
+                        const response = await fetch(`https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`, {
+                            headers: {
+                                'Authorization': `Bearer ${PAYSTACK_PUBLIC_KEY}`
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (data.status) {
+                            verifiedAccountInput.value = data.data.account_name;
+                            verifyStatus.className = "verification-badge success";
+                            verifyStatus.textContent = "✓ Account Verified: " + data.data.account_name;
+                            saveMerchant();
+                        } else {
+                            verifyStatus.className = "verification-badge error";
+                            verifyStatus.textContent = "✖ Could not verify account. Check details.";
+                        }
+                    } catch (err) {
+                        verifyStatus.className = "verification-badge error";
+                        verifyStatus.textContent = "✖ Verification network error.";
+                    }
+                } else {
+                    verifyStatus.style.display = "none";
+                }
+            }
+
+            accountNumberInput.addEventListener('input', verifyBankAccount);
+            bankSelect.addEventListener('change', verifyBankAccount);
+
+            // 3. Restore Local Storage
+            try {
+                if(localStorage.getItem('bizName')) document.getElementById('bizName').value = localStorage.getItem('bizName');
+                if(localStorage.getItem('bankCode')) bankSelect.value = localStorage.getItem('bankCode');
+                if(localStorage.getItem('accountNumber')) accountNumberInput.value = localStorage.getItem('accountNumber');
+                if(localStorage.getItem('verifiedAccount')) verifiedAccountInput.value = localStorage.getItem('verifiedAccount');
+            } catch(e) {}
+
+            // Ref ID
             const now = new Date();
-            const refCode = 'INV-' + now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + '-' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+            const refCode = 'INV-' + now.getFullYear() + 
+                            String(now.getMonth() + 1).padStart(2, '0') + 
+                            String(now.getDate()).padStart(2, '0') + '-' + 
+                            String(now.getHours()).padStart(2, '0') + 
+                            String(now.getMinutes()).padStart(2, '0');
             document.getElementById('invoiceNumber').value = refCode;
 
             function formatCurrency(amount) {
@@ -189,24 +285,33 @@
                 return total;
             }
 
-            addItemBtn.addEventListener('click', () => {
+            function createItemRow() {
                 const row = document.createElement('div');
                 row.className = "item-row";
                 row.innerHTML = `
                     <input type="text" placeholder="Item/Service" class="item-name" required>
-                    <input type="number" placeholder="Qty" value="1" min="1" class="item-qty" required>
-                    <input type="number" placeholder="Price (₦)" step="0.01" class="item-price" required>
-                    <button type="button" class="remove-btn">&times;</button>
+                    <input type="number" placeholder="Qty" value="1" min="1" inputmode="numeric" class="item-qty" required>
+                    <input type="number" placeholder="Price (₦)" step="0.01" inputmode="decimal" class="item-price" required>
+                    <button type="button" class="remove-btn" title="Remove">&times;</button>
                 `;
                 container.appendChild(row);
                 calculateTotals();
+            }
+
+            createItemRow();
+
+            addItemBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                createItemRow();
             });
 
-            container.addEventListener('click', (e) => {
-                if (e.target.classList.contains('remove-btn')) {
+            container.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('remove-btn')) {
                     if (container.querySelectorAll('.item-row').length > 1) {
                         e.target.closest('.item-row').remove();
                         calculateTotals();
+                    } else {
+                        alert('Invoice requires at least one active item.');
                     }
                 }
             });
@@ -219,19 +324,24 @@
                 return clean;
             }
 
-            // Save Merchant details to LocalStorage
-            function saveMerchantDetails() {
-                localStorage.setItem('bizName', document.getElementById('bizName').value.trim());
-                localStorage.setItem('bizBank', document.getElementById('bizBank').value.trim());
+            function saveMerchant() {
+                try {
+                    localStorage.setItem('bizName', document.getElementById('bizName').value.trim());
+                    localStorage.setItem('bankCode', bankSelect.value);
+                    localStorage.setItem('accountNumber', accountNumberInput.value.trim());
+                    localStorage.setItem('verifiedAccount', verifiedAccountInput.value.trim());
+                } catch(e) {}
             }
 
-            // Dispatch to WhatsApp
+            // WhatsApp Dispatch
             invoiceForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                saveMerchantDetails();
+                saveMerchant();
 
                 const bizName = document.getElementById('bizName').value.trim();
-                const bizBank = document.getElementById('bizBank').value.trim();
+                const selectedBankText = bankSelect.options[bankSelect.selectedIndex].text;
+                const accNum = accountNumberInput.value.trim();
+                const accName = verifiedAccountInput.value.trim();
                 const phone = cleanPhone(document.getElementById('customerPhone').value.trim());
                 const customer = document.getElementById('customerName').value.trim();
                 const ref = document.getElementById('invoiceNumber').value;
@@ -258,19 +368,22 @@
                 msg.push(`----------------------------------`);
                 msg.push(`💰 *TOTAL DUE:* *${formatCurrency(total)}*`);
                 msg.push(`----------------------------------`);
-                msg.push(`💳 *PAYMENT DETAILS:*`);
-                msg.push(`*Bank:* ${bizBank}`);
-                msg.push(`\nPlease send proof of payment once transfer is complete.`);
+                msg.push(`💳 *VERIFIED PAYMENT DETAILS:*`);
+                msg.push(`*Bank:* ${selectedBankText}`);
+                msg.push(`*Account No:* ${accNum}`);
+                msg.push(`*Account Name:* ${accName || bizName}`);
+                msg.push(`\nPlease reply with payment proof once transfer is made.`);
 
                 window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg.join('\n'))}`, '_blank');
             });
 
-            // Instant PDF Download Logic
+            // PDF Download
             document.getElementById('downloadPdfBtn').addEventListener('click', function() {
-                saveMerchantDetails();
-                
+                saveMerchant();
+
+                const selectedBankText = bankSelect.selectedIndex >= 0 ? bankSelect.options[bankSelect.selectedIndex].text : '';
                 document.getElementById('pdfBizName').textContent = document.getElementById('bizName').value || 'Business Name';
-                document.getElementById('pdfBizBank').textContent = 'Payment Info: ' + (document.getElementById('bizBank').value || 'N/A');
+                document.getElementById('pdfBizBank').textContent = `Payment Info: ${selectedBankText} | ${accountNumberInput.value} (${verifiedAccountInput.value})`;
                 document.getElementById('pdfRefId').textContent = document.getElementById('invoiceNumber').value;
                 document.getElementById('pdfDate').textContent = new Date().toLocaleDateString();
                 document.getElementById('pdfCustomer').textContent = document.getElementById('customerName').value || 'Valued Client';
